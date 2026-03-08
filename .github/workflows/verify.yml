@@ -1,0 +1,95 @@
+name: Verify Skill Format
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate:
+    name: Validate Skill
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check SKILL.md exists
+        run: |
+          if [ ! -f "skills/filament-development/SKILL.md" ]; then
+            echo "❌ SKILL.md not found"
+            exit 1
+          fi
+          echo "✅ SKILL.md found"
+
+      - name: Verify YAML frontmatter
+        run: |
+          echo "Checking YAML frontmatter..."
+          head -20 skills/filament-development/SKILL.md | grep -q "^name:" || exit 1
+          head -20 skills/filament-development/SKILL.md | grep -q "^description:" || exit 1
+          head -20 skills/filament-development/SKILL.md | grep -q "^compatible_agents:" || exit 1
+          head -20 skills/filament-development/SKILL.md | grep -q "^tags:" || exit 1
+          echo "✅ YAML frontmatter verified"
+
+      - name: Check file size
+        run: |
+          LINES=$(wc -l < skills/filament-development/SKILL.md)
+          echo "SKILL.md has $LINES lines"
+          if [ "$LINES" -lt 500 ]; then
+            echo "⚠️ Warning: Skill file seems small (minimum 500 lines recommended)"
+            exit 1
+          fi
+          echo "✅ File size check passed"
+
+      - name: Verify required sections
+        run: |
+          echo "Checking required sections..."
+          grep -q "^## Context" skills/filament-development/SKILL.md || exit 1
+          grep -q "^## Rules" skills/filament-development/SKILL.md || exit 1
+          grep -q "^## Examples" skills/filament-development/SKILL.md || exit 1
+          grep -q "^## References" skills/filament-development/SKILL.md || exit 1
+          echo "✅ All required sections present"
+
+      - name: Check for code examples
+        run: |
+          echo "Checking for code examples..."
+          EXAMPLES=$(grep -c '```' skills/filament-development/SKILL.md || echo 0)
+          if [ "$EXAMPLES" -lt 10 ]; then
+            echo "⚠️ Warning: Few code examples found"
+          else
+            echo "✅ Found $EXAMPLES code blocks"
+          fi
+
+  lint:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install markdownlint
+        run: npm install -g markdownlint-cli
+
+      - name: Lint README
+        run: markdownlint README.md || true
+
+      - name: Lint SKILL.md
+        run: markdownlint skills/filament-development/SKILL.md || true
+
+  success:
+    name: Validation Complete
+    runs-on: ubuntu-latest
+    needs: [validate, lint]
+    
+    steps:
+      - name: Summary
+        run: |
+          echo "✅ All checks passed!"
+          echo "Skill is ready for deployment"

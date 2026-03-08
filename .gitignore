@@ -1,0 +1,37 @@
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+.directory
+
+# Dependencies
+node_modules/
+vendor/
+
+# Environment
+.env.local
+.env.*.local
+*.pem
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+*.log
+
+# Build artifacts
+dist/
+build/
+
+# IDE temp files
+*.iml
+
+# Git
+.git/
